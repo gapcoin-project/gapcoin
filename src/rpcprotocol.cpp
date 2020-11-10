@@ -103,7 +103,7 @@ bool ReadHTTPRequestLine(std::basic_istream<char>& stream, int &proto,
 {
     string str;
     getline(stream, str);
-
+    cout << "------ http request line: " << str << endl;
     // HTTP request line is space-delimited
     vector<string> vWords;
     boost::split(vWords, str, boost::is_any_of(" "));
@@ -137,6 +137,7 @@ int ReadHTTPStatus(std::basic_istream<char>& stream, int &proto)
 {
     string str;
     getline(stream, str);
+    cout << "------ http status: " << str << endl;
     vector<string> vWords;
     boost::split(vWords, str, boost::is_any_of(" "));
     if (vWords.size() < 2)
@@ -157,6 +158,7 @@ int ReadHTTPHeaders(std::basic_istream<char>& stream, map<string, string>& mapHe
         std::getline(stream, str);
         if (str.empty() || str == "\r")
             break;
+        cout << "------ http headers: " << str << endl;
         string::size_type nColon = str.find(":");
         if (nColon != string::npos)
         {
@@ -192,6 +194,8 @@ int ReadHTTPMessage(std::basic_istream<char>& stream, map<string,
         vector<char> vch(nLen);
         stream.read(&vch[0], nLen);
         strMessageRet = string(vch.begin(), vch.end());
+        cout << "------ streamcount: " << stream.gcount() << endl;
+        cout << "------ strMessageRet: " << strMessageRet << endl;
     }
 
     string sConHdr = mapHeadersRet["connection"];

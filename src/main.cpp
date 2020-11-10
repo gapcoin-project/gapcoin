@@ -1029,7 +1029,8 @@ int CMerkleTx::GetBlocksToMaturity() const
 {
     if (!IsCoinBase())
         return 0;
-    return max(0, (COINBASE_MATURITY+1) - GetDepthInMainChain());
+    int MATURITY = TestNet() ? TESTNET_COINBASE_MATURITY : COINBASE_MATURITY;
+    return max(0, (MATURITY+1) - GetDepthInMainChain());
 }
 
 
@@ -1545,9 +1546,10 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, CCoinsViewCach
 
             // If prev is coinbase, check that it's matured
             if (coins.IsCoinBase()) {
-                if (nSpendHeight - coins.nHeight < COINBASE_MATURITY)
+                int MATURITY = TestNet() ? TESTNET_COINBASE_MATURITY : COINBASE_MATURITY;
+                if (nSpendHeight - coins.nHeight < MATURITY)
                     return state.Invalid(
-                        error("CheckInputs() : tried to spend coinbase at depth %d", nSpendHeight - coins.nHeight),
+                        error("CheckInputs() : tried to spend coinbase at depth %d - %d, limit %d", nSpendHeight, coins.nHeight, MATURITY),
                         REJECT_INVALID, "bad-txns-premature-spend-of-coinbase");
             }
 

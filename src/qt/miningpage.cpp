@@ -224,10 +224,8 @@ void MiningPage::updateUI(bool fGenerate)
         NextBlockTime = QChar(L'∞');
     else
     {
-        CBigNum Target;
-        Target.SetCompact(pindexBest->nDifficulty);
-        CBigNum ExpectedTime = (CBigNum(1) << 256)/(Target*Hashrate);
-        NextBlockTime = formatTimeInterval(ExpectedTime);
+        double gaps_per_day = this->powUtils->gaps_per_day(dHashesPerSec, chainActive.Tip()->nDifficulty);
+        NextBlockTime = QString::number(gaps_per_day);
     }
     ui->labelNextBlock->setText(NextBlockTime);
 

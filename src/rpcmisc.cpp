@@ -380,16 +380,25 @@ Value makekeypair(const Array& params, bool fHelp)
 
 Value dumpbootstrap(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() < 1 || params.size() > 3)
+    if (fHelp || params.size() < 1 || params.size() > 4)
         throw runtime_error(
-            "dumpbootstrap <destination>\n"
+            "dumpbootstrap <destination> <startblock> <endblock>\n"
             "Creates a bootstrap format block dump of the blockchain in destination, which can be a directory or a path with filename, up to 1200000.\n"
-            "Optional <startblock> is the first block number to dump.");
+            "Optional <startblock> is the first block number to dump, default 0."
+            "Optional <endblock> is the last block number to dump, (default 1260000)."
+            );
 
     string strDest = params[0].get_str();
     
-    int nEndBlock = 1200000; // params[1].get_int();
+    int nEndBlock = 1260000;
     int nStartBlock = 0;
+
+    if (params.size() > 1)
+        nStartBlock = params[1].get_int();
+
+    if (params.size() > 2) {
+        nEndBlock = params[2].get_int();
+    }
 
     boost::filesystem::path pathDest(strDest);
     if (boost::filesystem::is_directory(pathDest))

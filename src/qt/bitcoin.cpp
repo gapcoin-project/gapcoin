@@ -478,7 +478,6 @@ int main(int argc, char *argv[])
 
     GUIUtil::SubstituteFonts();
 
-    BitcoinApplication app(argc, argv);
 #if QT_VERSION > 0x050100
     // Generate high-dpi pixmaps
     QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
@@ -487,6 +486,7 @@ int main(int argc, char *argv[])
     QApplication::setAttribute(Qt::AA_DontShowIconsInMenus);
 #endif
 
+    BitcoinApplication app(argc, argv);
     // Register meta types used for QMetaObject::invokeMethod
     qRegisterMetaType< bool* >();
 
