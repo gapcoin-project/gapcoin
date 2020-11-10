@@ -1,8 +1,8 @@
 package=mpfr
-$(package)_version=4.0.2
+$(package)_version=4.1.0
 $(package)_download_path=https://www.mpfr.org/mpfr-current
 $(package)_file_name=$(package)-$($(package)_version).tar.bz2
-$(package)_sha256_hash=c05e3f02d09e0e9019384cdd58e0f19c64e6db1fd6f5ecf77b4b1c61ca253acc
+$(package)_sha256_hash=feced2d430dd5a97805fa289fed3fc8ff2b094c02d05287fd6133e7f1f0ec926
 $(package)_dependencies=gmp
 
 define $(package)_set_vars
