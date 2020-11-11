@@ -68,9 +68,10 @@ public:
         genesis.nAdd.assign(nAdd, nAdd + sizeof(nAdd) / sizeof(uint8_t));
 
         hashGenesisBlock = genesis.GetHash();
-
         assert(hashGenesisBlock == uint256(GENESIS_HASH));
         assert(genesis.hashMerkleRoot == uint256(GENESIS_MERKLE));
+        std::cout << "Mainnet" << std::endl;
+        genesis.ToString();
 
 #if BOOST_VERSION >= 106000
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,38);                    // Gapcoin addresses start with 'G'
@@ -142,6 +143,8 @@ public:
         hashGenesisBlock = genesis.GetHash();
 
         assert(hashGenesisBlock == uint256(GENESIS_TN_HASH));
+        std::cout << "Testnet" << std::endl;
+        genesis.ToString();
 
         vFixedSeeds.clear();
         vSeeds.clear();
@@ -190,6 +193,8 @@ public:
         strDataDir = "regtest";
 
         assert(hashGenesisBlock == uint256(GENESIS_HASH));
+        std::cout << "Regtest" << std::endl;
+        genesis.ToString();
 
         vSeeds.clear();  // Regtest mode doesn't have any DNS seeds.
     }

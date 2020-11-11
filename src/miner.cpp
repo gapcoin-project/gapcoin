@@ -14,6 +14,9 @@
 #include "PoWCore/src/PoWProcessor.h"
 #include "PoWCore/src/PoWUtils.h"
 #include "PoWCore/src/Sieve.h"
+#if __STDC_VERSION__ < 201112L
+#include <boost/move/unique_ptr.hpp>
+#endif
 #endif
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -104,7 +107,11 @@ public:
 CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
 {
     // Create new block
+#if __STDC_VERSION__ < 201112L
+    boost::movelib::unique_ptr<CBlockTemplate> pblocktemplate(new CBlockTemplate());
+#else
     std::unique_ptr<CBlockTemplate> pblocktemplate(new CBlockTemplate());
+#endif
     if(!pblocktemplate.get())
         return NULL;
     CBlock *pblock = &pblocktemplate->block; // pointer for convenience
@@ -456,7 +463,11 @@ void static GapcoinMiner(CWallet *pwallet, uint64_t nThread, uint64_t numThreads
         unsigned int nTransactionsUpdatedLast = mempool.GetTransactionsUpdated();
         CBlockIndex* pindexPrev = chainActive.Tip();
 
+#if __STDC_VERSION__ < 201112L
+        boost::movelib::unique_ptr<CBlockTemplate> pblocktemplate(CreateNewBlockWithKey(reservekey));
+#else
         std::unique_ptr<CBlockTemplate> pblocktemplate(CreateNewBlockWithKey(reservekey));
+#endif
         if (!pblocktemplate.get())
             return;
         CBlock *pblock = &pblocktemplate->block;

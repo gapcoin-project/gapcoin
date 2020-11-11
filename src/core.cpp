@@ -286,3 +286,24 @@ void CBlock::print() const
         LogPrintf("%s ", vMerkleTree[i].ToString());
     LogPrintf("\n");
 }
+
+void CBlock::ToString() const
+{
+    std::string str;
+    str += strprintf("CBlock(hash=%s, ver=%d, hashPrevBlock=%s, hashMerkleRoot=%s, nTime=%u, nDifficulty=%08x, nNonce=%u, vtx=%u)\n",
+        GetHash().ToString(),
+        nVersion,
+        hashPrevBlock.ToString(),
+        hashMerkleRoot.ToString(),
+        nTime, nDifficulty, nNonce,
+        vtx.size());
+    for (unsigned int i = 0; i < vtx.size(); i++)
+    {
+        str += "  ";
+        str += vtx[i].ToString();
+    }
+    str += "  vMerkleTree: ";
+    for (unsigned int i = 0; i < vMerkleTree.size(); i++)
+        str += strprintf("%s ", vMerkleTree[i].ToString());
+    std::cout << str << std::endl;
+}

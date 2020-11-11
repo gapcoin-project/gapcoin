@@ -72,7 +72,7 @@ public:
             }
         }
     }
-    bool GetKey(const CKeyID &address, CKey &keyOut) const
+    bool GetKey(const CKeyID &address, CKey &keyOut) const override
     {
         {
             LOCK(cs_KeyStore);

@@ -2,7 +2,7 @@
 // Copyright (c) 2009-2014 The Bitcoin developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-
+#include <iostream>
 #include "rpcserver.h"
 
 #include "base58.h"
@@ -437,53 +437,6 @@ bool ClientAllowed(const boost::asio::ip::address& address)
     return false;
 }
 
-class AcceptedConnection
-{
-public:
-    virtual ~AcceptedConnection() {}
-
-    virtual std::iostream& stream() = 0;
-    virtual std::string peer_address_to_string() const = 0;
-    virtual void close() = 0;
-};
-
-template <typename Protocol>
-class AcceptedConnectionImpl : public AcceptedConnection
-{
-public:
-    AcceptedConnectionImpl(
-            asio::io_service& io_service,
-            ssl::context &context,
-            bool fUseSSL) :
-        sslStream(io_service, context),
-        _d(sslStream, fUseSSL),
-        _stream(_d)
-    {
-    }
-
-    virtual std::iostream& stream()
-    {
-        return _stream;
-    }
-
-    virtual std::string peer_address_to_string() const
-    {
-        return peer.address().to_string();
-    }
-
-    virtual void close()
-    {
-        _stream.close();
-    }
-
-    typename Protocol::endpoint peer;
-    asio::ssl::stream<typename Protocol::socket> sslStream;
-
-private:
-    SSLIOStreamDevice<Protocol> _d;
-    iostreams::stream< SSLIOStreamDevice<Protocol> > _stream;
-};
-
 void ServiceConnection(AcceptedConnection *conn);
 
 // Forward declaration required for RPCListen
@@ -503,7 +456,7 @@ static void RPCListen(boost::shared_ptr< basic_socket_acceptor<Protocol> > accep
                    const bool fUseSSL)
 {
     // Accept connection
-    boost::shared_ptr< AcceptedConnectionImpl<Protocol> > conn(new AcceptedConnectionImpl<Protocol>(acceptor->get_io_service(), context, fUseSSL));
+    boost::shared_ptr< AcceptedConnectionImpl<Protocol> > conn(new AcceptedConnectionImpl<Protocol>(GetIOServiceFromPtr(acceptor), context, fUseSSL));
 
     acceptor->async_accept(
             conn->sslStream.lowest_layer(),
@@ -587,7 +540,7 @@ void StartRPCThreads()
     }
 
     assert(rpc_io_service == NULL);
-    rpc_io_service = new asio::io_service();
+    rpc_io_service = new ioContext();
     rpc_ssl_context = new ssl::context(ssl::context::sslv23);
 
     const bool fUseSSL = GetBoolArg("-rpcssl", false);
@@ -615,12 +568,12 @@ void StartRPCThreads()
     asio::ip::address bindAddress = loopback ? asio::ip::address_v6::loopback() : asio::ip::address_v6::any();
     ip::tcp::endpoint endpoint(bindAddress, GetArg("-rpcport", Params().RPCPort()));
     boost::system::error_code v6_only_error;
+    boost::shared_ptr<ip::tcp::acceptor> acceptor(new ip::tcp::acceptor(*rpc_io_service));
 
     bool fListening = false;
     std::string strerr;
     try
     {
-        boost::shared_ptr<ip::tcp::acceptor> acceptor(new ip::tcp::acceptor(*rpc_io_service));
         acceptor->open(endpoint.protocol());
         acceptor->set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
 
@@ -632,7 +585,6 @@ void StartRPCThreads()
 
         RPCListen(acceptor, *rpc_ssl_context, fUseSSL);
 
-        rpc_acceptors.push_back(acceptor);
         fListening = true;
     }
     catch(boost::system::system_error &e)
@@ -654,7 +606,6 @@ void StartRPCThreads()
 
             RPCListen(acceptor, *rpc_ssl_context, fUseSSL);
 
-            rpc_acceptors.push_back(acceptor);
             fListening = true;
         }
     }
@@ -671,7 +622,7 @@ void StartRPCThreads()
 
     rpc_worker_group = new boost::thread_group();
     for (int i = 0; i < GetArg("-rpcthreads", 4); i++)
-        rpc_worker_group->create_thread(boost::bind(&asio::io_service::run, rpc_io_service));
+        rpc_worker_group->create_thread(boost::bind(&ioContext::run, rpc_io_service));
 }
 
 void StartDummyRPCThread()
@@ -864,22 +815,39 @@ void ServiceConnection(AcceptedConnection *conn)
                 throw JSONRPCError(RPC_PARSE_ERROR, "Parse error");
 
             string strReply;
-
+            cout << "------ valrequest type = " << valRequest.type() << endl;
             // singleton request
             if (valRequest.type() == obj_type) {
+                cout << "------ Request is obj_type" << endl;
                 jreq.parse(valRequest);
+                cout << "------ Request parsed" << endl;
 
                 Value result = tableRPC.execute(jreq.strMethod, jreq.params);
+                cout << "------ Request executed" << endl;
 
                 // Send reply
                 strReply = JSONRPCReply(result, Value::null, jreq.id);
+                cout << "------ Reply constructed." << endl;
 
             // array of requests
-            } else if (valRequest.type() == array_type)
+            } else if (valRequest.type() == array_type) {
                 strReply = JSONRPCExecBatch(valRequest.get_array());
-            else
-                throw JSONRPCError(RPC_PARSE_ERROR, "Top-level object parse error");
+            // misparsed as int_type but is actually singleton
+            // } else if (valRequest.type() == int_type) {
+            //     cout << "Request is int_type" << endl;
+            //     jreq.parse(valRequest);
+            //     cout << "Request parsed" << endl;
 
+            //     Value result = tableRPC.execute(jreq.strMethod, jreq.params);
+            //     cout << "Request executed" << endl;
+
+            //     // Send reply
+            //     strReply = JSONRPCReply(result, Value::null, jreq.id);
+            //     cout << "Reply constructed." << endl;
+            } else {
+                cout << "------ Ran out of options" << endl;
+                throw JSONRPCError(RPC_PARSE_ERROR, "Top-level object parse error");
+            }
             conn->stream() << HTTPReply(HTTP_OK, strReply, fRun) << std::flush;
         }
         catch (Object& objError)

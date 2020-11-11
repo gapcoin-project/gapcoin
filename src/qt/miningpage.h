@@ -3,6 +3,9 @@
 
 #include <QWidget>
 #include <memory>
+#if __STDC_VERSION__ < 201112L
+#include <boost/move/unique_ptr.hpp>
+#endif
 
 #include "walletmodel.h"
 
@@ -32,7 +35,11 @@ private:
     int maxGenProc;
     int nThreads;
     int nUseThreads;
+#if __STDC_VERSION__ < 201112L
+    boost::movelib::unique_ptr<WalletModel::UnlockContext> unlockContext;
+#else
     std::unique_ptr<WalletModel::UnlockContext> unlockContext;
+#endif
     bool hasMiningprivkey;
 
     QVector<double> vX;
